@@ -1,0 +1,36 @@
+{
+  "name": "able-documenttransport",
+  "version": "0.1.8",
+  "description": "tbd",
+  "private": true,
+  "main": "app.js",
+  "scripts": {
+    "deploy": "echo Running ESLint ... && npx eslint **/*.js && echo done && docker-build deploy"
+  },
+  "author": "Alexander Strutz",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@ablegroup/requestid": "^1.0.0",
+    "@ablegroup/tenant": "^1.0.0",
+    "aws-sdk": "^2.726.0",
+    "aws-serverless-express": "^3.3.8",
+    "axios": "^0.19.2",
+    "body-parser": "^1.19.0",
+    "cookie-parser": "^1.4.5",
+    "debug": "^4.1.1",
+    "express": "^4.17.1",
+    "express-handlebars": "^5.1.0",
+    "handlebars": "^4.7.6",
+    "handlebars-helpers": "^0.10.0",
+    "hbs": "^4.1.1",
+    "http-errors": "^1.7.3",
+    "morgan": "^1.10.0",
+    "request": "^2.88.2",
+    "uuid": "^3.4.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.3.1",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-import": "^2.21.2"
+  }
+}

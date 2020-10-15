@@ -1,0 +1,111 @@
+.content-wrapper {
+    margin: 20px;
+}
+
+.content-wrapper-single {
+    overflow: hidden;
+    width: 500px;
+}
+
+.content-left {
+    float: left;
+    width: 45%;
+    margin-right: 2%;
+}
+
+.content-right {
+    overflow: hidden;
+    width: 45%;
+}
+
+.mdc-chip {
+    width: fit-content;
+}
+
+.mdc-chip-set {
+    display: none;
+    margin: 10px 0px;
+}
+
+#config-chip-set {
+    display: block;
+    margin: 0px;
+}
+
+.mdc-list-item__text {
+    width: 100%;
+}
+
+.mdc-text-field {
+    margin-bottom: 20px;
+}
+
+.search-label {
+    width: 500px;
+}
+
+.text-label {
+    width: 100%;
+}
+
+:root {
+    --mdc-theme-primary: #0069af;
+    --mdc-theme-secondary: #cccc00;
+}
+
+.inquiry-card {
+    padding: 16px;
+    width: fit-content;
+    max-width: 400px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.inquiry-message {
+    white-space: pre-line;
+    margin-bottom: 0.5em;
+}
+
+.inquiry-card-right {
+    display: inline-block;
+}
+
+.inquiry-date {
+    right: 4px;
+    bottom: 0;
+    position: absolute;
+}
+
+.button-wrapper {
+    width: 100%;
+}
+
+.button-right {
+    float: right;
+}
+
+.mdc-list {
+    padding: 0;
+}
+
+.loaded {
+    display: none;
+}
+
+.inquiry-group {
+    margin-bottom: 10px;
+}
+
+.chatContainer {
+    text-align: right;
+}
+
+.inquiry-reason {
+    text-align: center;
+    margin-block-start: 0em;
+}
+
+.inquiry-reason-textfield {
+    margin: 5px;
+}
