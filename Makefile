@@ -17,7 +17,7 @@ test: init
 build: clean build-lambda
 
 build-lambda: test
-	zip -X -r ./dist/lambda.zip *.js node_modules modules routes views -x node_modules/esl*/**\* node_modules/lodash/**\* node_modules/ajv/**\* node_modules/esquery/**\*
+	zip -X -r ./dist/lambda.zip *.js classes node_modules modules routes views -x node_modules/esl*/**\* node_modules/lodash/**\* node_modules/ajv/**\* node_modules/esquery/**\*
 
 tf-bucket:
 	$(eval BUCKET_NAME=$(APP_NAME)-terraform)
