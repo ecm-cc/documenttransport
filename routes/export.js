@@ -1,16 +1,11 @@
 const express = require('express');
 const checkGroup = require('@ablegroup/checkgroup');
-const ExportSet = require('../classes/ExportSet');
 const configloader = require('../global.config');
 
 let config = {};
 
 module.exports = (assetBasePath) => {
     const router = express.Router();
-    router.use(express.json());
-    router.use(express.urlencoded({
-        extended: true,
-    }));
 
     router.get('/', async (req, res) => {
         config = configloader.load(req.tenantId);
@@ -37,18 +32,6 @@ module.exports = (assetBasePath) => {
                 res.status(406).send('Not Acceptable');
             },
         });
-    });
-
-    router.post('/', async (req, res) => {
-        try {
-            const set = new ExportSet(req);
-            await set.init(req);
-            await set.export();
-            res.status(200).send('OK');
-        } catch (err) {
-            console.error(err);
-            res.status(400).send(err.message);
-        }
     });
     return router;
 };

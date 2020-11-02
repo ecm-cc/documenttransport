@@ -14,14 +14,20 @@ const httpOptions = {
 };
 
 window.onload = async () => {
-    mdc.list.MDCList.attachTo(document.querySelector('.mdc-list'));
-    mdc.checkbox.MDCCheckbox.attachTo(document.querySelector('.mdc-checkbox'));
-    dialog = mdc.dialog.MDCDialog.attachTo(document.querySelector('.mdc-dialog'));
-    [].map.call(document.querySelectorAll('.mdc-text-field'), (el) => new mdc.textField.MDCTextField(el));
-    snackBar = new mdc.snackbar.MDCSnackbar(document.querySelector('.mdc-snackbar'));
+    initMDCElements();
     metaData = $('#metaData').data('meta');
     await $.getScript(`${metaData.assetBasePath}/util.js`);
 };
+
+function initMDCElements() {
+    mdc.list.MDCList.attachTo(document.querySelector('.mdc-list'));
+    mdc.checkbox.MDCCheckbox.attachTo(document.querySelector('.mdc-checkbox'));
+    mdc.linearProgress.MDCLinearProgress.attachTo(document.querySelector('.mdc-linear-progress'));
+    dialog = mdc.dialog.MDCDialog.attachTo(document.querySelector('.mdc-dialog'));
+    [].map.call(document.querySelectorAll('.mdc-text-field'), (el) => new mdc.textField.MDCTextField(el));
+    snackBar = new mdc.snackbar.MDCSnackbar(document.querySelector('.mdc-snackbar'));
+    snackBar.timeoutMs = 10000;
+}
 
 function renderList() {
     $('.mdc-list').empty();
@@ -39,7 +45,8 @@ function renderList() {
     });
 }
 
-async function buildExportset() {
+async function buildExportSet() {
+    showOverlay();
     const searchQuery = getSearchQuery();
     if (searchQuery !== '' && (searchQuery.includes('objectdefinitionids') || searchQuery.includes('fulltext'))) {
         httpOptions.url = `${searchQuery}&pagesize=999`;
@@ -52,6 +59,7 @@ async function buildExportset() {
     } else {
         failSnackbar('Bitte starten Sie einen Suchvorgang mit mindestens einem Filter!');
     }
+    hideOverlay();
 }
 
 function removeElement(id) {
@@ -69,21 +77,29 @@ function sendExport() {
     dialog.open();
     dialog.listen('MDCDialog:closed', (reason) => {
         if (reason.detail.action === 'ok') {
+            showOverlay();
             exportSet.name = $('.mdc-text-field__input').val();
             exportSet.template = $('.mdc-checkbox__native-control').is(':checked');
             exportSet.elements = JSON.stringify(exportSet.elements);
-            console.log(exportSet);
             $.ajax({
                 method: 'POST',
-                url: '/able-documenttransport/export',
+                url: '/able-documenttransport/sets/set',
                 data: exportSet,
             }).done(() => {
                 exportSet.elements = JSON.parse(exportSet.elements);
-                successSnackbar(`Das Set ${exportSet.name} wurde erfolgreich exportiert.`);
+                successSnackbar(`Das Set "${exportSet.name}" wurde erfolgreich exportiert.`);
                 clearElements();
             }).fail((err) => {
                 console.error(err);
-                failSnackbar(`Der Export konnte aufgrund eines Fehlers nicht abgesendet werden: ${err.responseText ? err.responseText : err}`);
+                exportSet.elements = JSON.parse(exportSet.elements);
+                if (err.status === 413) {
+                    const size = Math.round(new TextEncoder().encode(JSON.stringify(exportSet)).length / 1024);
+                    failSnackbar(`Der Export konnte nicht abgesendet werden, da das Exportset zu groß ist (${size} KB von maximalen 100 KB).`);
+                } else {
+                    failSnackbar(`Der Export konnte aufgrund eines Fehlers nicht abgesendet werden: ${err.responseText ? err.responseText : err}`);
+                }
+            }).always(() => {
+                hideOverlay();
             });
         }
     });

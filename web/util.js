@@ -21,3 +21,17 @@ function successSnackbar(text) {
     $('.mdc-snackbar__label').text(text);
     snackBar.open();
 }
+
+/**
+ * Shows a gray overlay for loading purposes
+ */
+function showOverlay() {
+    $('#overlay').show();
+}
+
+/**
+ * Hides a gray overlay when content is loaded
+ */
+function hideOverlay() {
+    $('#overlay').hide();
+}

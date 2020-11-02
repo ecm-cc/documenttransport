@@ -40,7 +40,7 @@ class ExportSet extends Set {
     }
 
     async export() {
-        const remoteSets = await s3.listObjectsV2({ Bucket: 'able-documenttransport-store' }).promise();
+        const remoteSets = await s3.listObjectsV2({ Bucket: this.config.bucketName }).promise();
         if (remoteSets.Contents.some((remoteSet) => remoteSet.Key === `${this.name}/meta.json`)) {
             throw new ExportSetAlreadyExistingError(`ExportSet mit dem Namen "${this.name}" bereits vorhanden.`);
         }
@@ -65,6 +65,7 @@ class ExportSet extends Set {
             creator: this.creator,
             count: this.meta.length,
             stage: this.config.stage,
+            tenant: this.tenant,
             documents: {
                 name: this.meta.map((metaElement) => getFileName(metaElement)),
                 id: this.meta.map((metaElement) => metaElement.id),
