@@ -9,6 +9,7 @@ function failSnackbar(text) {
     $('.mdc-snackbar__label').css('color', '#FFFFFF');
     $('.mdc-snackbar__label').text(text);
     snackBar.open();
+    $('.mdc-snackbar__action').on('click', () => { snackBar.close(); });
 }
 
 /**
@@ -20,6 +21,7 @@ function successSnackbar(text) {
     $('.mdc-snackbar__label').css('color', '#FFFFFF');
     $('.mdc-snackbar__label').text(text);
     snackBar.open();
+    $('.mdc-snackbar__action').on('click', () => { snackBar.close(); });
 }
 
 /**

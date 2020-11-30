@@ -29,16 +29,10 @@
     border: none;
 }
 
-.remove-exportset {
+.summary-icon-right {
     position: absolute;
     right: 10px;
     font-size: 32px;
-}
-
-.add-importset {
-    position: absolute;
-    right: 10px;
-    font-size: 32px; 
 }
 
 details {
@@ -59,10 +53,18 @@ details {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(0, 0, 0, 0.5);
     z-index: 2;
 }
 
 .mdc-linear-progress {
     top: 50%;
+}
+
+.cancel-snackbar {
+    color: white;
+}
+
+.text-field-wrapper {
+    display: none;
 }

@@ -1,9 +1,6 @@
 const express = require('express');
 const ExportSet = require('../classes/ExportSet');
 const ImportSet = require('../classes/ImportSet');
-// const configloader = require('../global.config');
-
-// let config = {};
 
 module.exports = () => {
     const router = express.Router();
@@ -14,19 +11,19 @@ module.exports = () => {
         res.send(importSets);
     });
 
-    /* router.delete('/:id', async (req, res)) {
-
-    } */
-
     // Import a Set
     router.put('/set', async (req, res) => {
         try {
             const set = new ImportSet(req);
             await set.init();
-            await set.import();
-            res.status(200).send('OK');
+            const importResult = await set.import();
+            if (importResult.length > 0) {
+                res.status(409).send({ failedDocuments: importResult });
+            } else {
+                res.status(200).send('OK');
+            }
         } catch (err) {
-            console.log(err);
+            console.error(err);
             res.status(400).send(err.message);
         }
     });
@@ -39,6 +36,7 @@ module.exports = () => {
             await set.export();
             res.status(200).send('OK');
         } catch (err) {
+            console.error(err);
             res.status(400).send(err.message);
         }
     });

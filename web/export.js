@@ -39,7 +39,7 @@ function renderList() {
         listElem.push(document.caption);
         listElem.push('</span><span class="mdc-list-item__secondary-text">');
         listElem.push(document.category.displayName);
-        listElem.push(`</span></span><span class="material-icons remove-exportset" onclick="removeElement('${document.id}')">`);
+        listElem.push(`</span></span><span class="material-icons remove-exportset summary-icon-right" onclick="removeElement('${document.id}')">`);
         listElem.push('remove_circle_outline</span></li>');
         $('.mdc-list').append(listElem.join(''));
     });
@@ -52,9 +52,9 @@ async function buildExportSet() {
         httpOptions.url = `${searchQuery}&pagesize=999`;
         const searchResult = await $.ajax(httpOptions);
         const filtered = searchResult.items.filter((item) => !item.mimeType.includes('application/vnd.dvelop.folder'));
-        filtered.forEach((item) => {
-            exportSet.elements.push(item);
-        });
+        exportSet.elements = exportSet.elements.concat(filtered.map((element) => ({
+            id: element.id, category: element.category, caption: element.caption,
+        })));
         renderList();
     } else {
         failSnackbar('Bitte starten Sie einen Suchvorgang mit mindestens einem Filter!');
@@ -79,7 +79,7 @@ function sendExport() {
         if (reason.detail.action === 'ok') {
             showOverlay();
             exportSet.name = $('.mdc-text-field__input').val();
-            exportSet.template = $('.mdc-checkbox__native-control').is(':checked');
+            exportSet.template = $('.mdc-checkbox__native-control').is(':checked') ? 1 : 0;
             exportSet.elements = JSON.stringify(exportSet.elements);
             $.ajax({
                 method: 'POST',

@@ -1,104 +1,55 @@
 <div class="content-wrapper">
-  {{#if isAdmin}}
-    <details id="importset-list" open>
-      <summary class="mdc-typography--headline6">
-        ImportSet auswählen
-      </summary>
-      <ul class="mdc-list mdc-list--two-line">
-        {{#each importSets}}
-          <li class="mdc-list-item" tabindex="0">
-            <span class="mdc-list-item__ripple"></span>
-            <span class="mdc-list-item__text">
-              <span class="mdc-list-item__primary-text">
-                {{this.name}}
-                von
-                {{this.stage}}
-                , enthält
-                {{this.count}}
-                Dokumente
-                {{#eq this.template "true"}}
-                  (Musterakte, mehrfach verwendbar)
-                {{/eq}}
-              </span>
-              <span class="mdc-list-item__secondary-text">
-                Erstellt von
-                {{this.creator}}
-                am
-                {{timeStampToDate this.created}}
-              </span>
-            </span>
-            <span
-              class="material-icons add-importset"
-              onclick="useImportSet('{{JSONstringify this}}')"
-            >
-              check
-            </span>
-          </li>
-        {{/each}}
-      </ul>
-    </details>
-    <details>
-      <summary class="mdc-typography--headline6" id="importset-title">
-        Kein ImportSet ausgewählt
-      </summary>
-    </details>
-    <div class="button-wrapper">
-      <div class="mdc-form-field submit-button">
-        <button
-          class="mdc-button mdc-button--raised save-button"
-          onclick="dapi.closeResourceIfMainResource();"
-        >
-          <div class="mdc-button__ripple"></div>
-          <span class="mdc-button__label">
-            Beenden
-          </span>
-        </button>
-      </div>
-      <div class="mdc-form-field submit-button button-right">
-        <button
-          class="mdc-button mdc-button--raised save-button"
-          onclick="doImport()"
-        >
-          <div class="mdc-button__ripple"></div>
-          <span class="mdc-button__label">
-            Importieren
-          </span>
-        </button>
-      </div>
-    </div>
-    <div class="mdc-snackbar">
-        <div class="mdc-snackbar__surface">
-            <div class="mdc-snackbar__label" role="status" aria-live="polite"></div>
+    {{#if isAdmin}}
+        <details id="importset-list" open>
+            <summary class="mdc-typography--headline6">
+                ImportSet auswählen
+            </summary>
+            <ul class="mdc-list mdc-list--two-line">
+                {{#each importSets}}
+                    <li class="mdc-list-item" tabindex="0">
+                        <span class="mdc-list-item__ripple"></span>
+                        <span class="mdc-list-item__text">
+                            <span class="mdc-list-item__primary-text">
+                                {{this.name}} von {{this.stage}}, enthält {{this.count}} Dokumente
+                                {{#eq this.template "1"}}
+                                    (Musterakte, mehrfach verwendbar){{/eq}}
+                            </span>
+                            <span class="mdc-list-item__secondary-text">
+                                Erstellt von {{this.creator}} am {{timeStampToDate this.created}}
+                            </span>
+                        </span>
+                        <span class="material-icons summary-icon-right add-importset"
+                            onclick="useImportSet('{{JSONstringify this}}')">
+                            check
+                        </span>
+                    </li>
+                {{/each}}
+            </ul>
+        </details>
+        <details id="importset-detail-list">
+            <summary class="mdc-typography--headline6" id="importset-title">
+                Kein ImportSet ausgewählt
+            </summary>
+            <ul class="mdc-list mdc-list--two-line" id="importset-details">
+            </ul>
+        </details>
+        <!-- Overwrite parent not included maybe later -->
+        <div style="display: none;">{{> checkbox title="In andere Akte importieren"}}</div>
+        <div class="text-field-wrapper">
+
         </div>
-    </div>
-    <div class="mdc-dialog">
-        <div class="mdc-dialog__container">
-            <div class="mdc-dialog__surface"
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="my-dialog-title"
-            aria-describedby="my-dialog-content">
-            <div class="mdc-dialog__content" id="my-dialog-content">
-                Wollen Sie dieses ImportSet wirklich importieren?
-            </div>
-            <div class="mdc-dialog__actions">
-                <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="cancel">
-                <div class="mdc-button__ripple"></div>
-                <span class="mdc-button__label">Abbrechen</span>
-                </button>
-                <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="ok">
-                <div class="mdc-button__ripple"></div>
-                <span class="mdc-button__label">Bestätigen</span>
-                </button>
-            </div>
+        <div class="button-wrapper">
+            {{> button title="Beenden" onclick="dapi.closeResourceIfMainResource();"}}
+            {{> button title="Importieren" onclick="doImport()" additionalclass="button-right"}}
         </div>
-    </div>
-    <div id="metaData" data-meta="{{metaData}}"></div>
-  {{else}}
-    <header>
-      <h1 class="mdc-typography--headline6 header-config">
-        Sie sind nicht berechtigt Änderungen vorzunehmen.
-      </h1>
-    </header>
-  {{/if}}
+        {{> snackbar }}
+        {{> dialog question="Wollen Sie dieses Exportset wirklich exportieren?"}}
+        <div id="metaData" data-meta="{{metaData}}"></div>
+    {{else}}
+        <header>
+            <h1 class="mdc-typography--headline6 header-config">
+                Sie sind nicht berechtigt Änderungen vorzunehmen.
+            </h1>
+        </header>
+    {{/if}}
 </div>

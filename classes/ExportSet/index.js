@@ -21,6 +21,7 @@ class ExportSet extends Set {
     async init() {
         await this.setCreator();
         await this.setMeta();
+        await this.setCategories();
     }
 
     async setCreator() {
@@ -32,11 +33,17 @@ class ExportSet extends Set {
     async setMeta() {
         const promises = [];
         this.meta.forEach((metaElement) => {
-            this.httpOptions.url = `${this.config.host}${metaElement._links.details.href.split('#')[0]}`;
+            this.httpOptions.url = `${this.config.host}/dms/r/${this.config.repositoryId}/o2/${metaElement.id}`;
             promises.push(axios(this.httpOptions));
         });
         const metaResponses = await Promise.all(promises);
         this.meta = metaResponses.map((response) => response.data);
+    }
+
+    async setCategories() {
+        this.httpOptions.url = `${this.config.host}/dms/r/${this.config.repositoryId}/source`;
+        const response = await axios(this.httpOptions);
+        this.categories = response.data.categories;
     }
 
     async export() {
@@ -69,8 +76,21 @@ class ExportSet extends Set {
             documents: {
                 name: this.meta.map((metaElement) => getFileName(metaElement)),
                 id: this.meta.map((metaElement) => metaElement.id),
+                category: this.buildCategories(),
             },
         }, null, 2);
+    }
+
+    buildCategories() {
+        const fullCategories = [];
+        const categoryNames = this.meta.map((metaElement) => metaElement.category);
+        categoryNames.forEach((category) => {
+            console.log(categoryNames);
+            console.log(category);
+            console.log(this.categories);
+            fullCategories.push(this.categories.find((c) => c.displayName === category));
+        });
+        return fullCategories;
     }
 
     async upload(path, content) {

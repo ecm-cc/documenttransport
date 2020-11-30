@@ -1,118 +1,53 @@
 <div class="content-wrapper">
     {{#if isAdmin}}
 
-    <details open>
-        <summary class="mdc-typography--headline6">Dokumente suchen</summary>
-        <iframe class="search-container" src="/dms/s"></iframe>
-    </details>
-    <div class="button-wrapper">
-        <div class="mdc-form-field submit-button">
-            <button class="mdc-button mdc-button--raised save-button" onclick="clearElements()">
-                <div class="mdc-button__ripple"></div>
-                <span class="mdc-button__label">
-                    Exportset leeren
-                </span>
-            </button>
+        <details open>
+            <summary class="mdc-typography--headline6">Dokumente suchen</summary>
+            <iframe class="search-container" src="/dms/s"></iframe>
+        </details>
+
+        <div class="button-wrapper">
+            {{> button title="Exportset leeren" onclick="clearElements()"}}
+            {{> button title="Suchergebnisse hinzufügen" onclick="buildExportSet()" additionalclass="button-right"}}
         </div>
-        <div class="mdc-form-field submit-button button-right">
-            <button class="mdc-button mdc-button--raised save-button" onclick="buildExportSet()">
-                <div class="mdc-button__ripple"></div>
-                <span class="mdc-button__label">
-                    Suchergebnisse zum Exportset hinzufügen
+        
+        <br>
+        <label class="mdc-text-field mdc-text-field--outlined">
+            <input type="text" class="mdc-text-field__input" aria-labelledby="exportset-name">
+            <span class="mdc-notched-outline">
+                <span class="mdc-notched-outline__leading"></span>
+                <span class="mdc-notched-outline__notch">
+                    <span class="mdc-floating-label" id="exportset-name">Name des Exportsets</span>
                 </span>
-            </button>
-        </div>
-    </div>
-    <br>
-    <label class="mdc-text-field mdc-text-field--outlined">
-        <input type="text" class="mdc-text-field__input" aria-labelledby="exportset-name">
-        <span class="mdc-notched-outline">
-            <span class="mdc-notched-outline__leading"></span>
-            <span class="mdc-notched-outline__notch">
-            <span class="mdc-floating-label" id="exportset-name">Name des Exportsets</span>
+                <span class="mdc-notched-outline__trailing"></span>
             </span>
-            <span class="mdc-notched-outline__trailing"></span>
-        </span>
-    </label>
+        </label>
 
-    <div class="mdc-form-field">
-        <div class="mdc-checkbox">
-            <input type="checkbox"
-                class="mdc-checkbox__native-control"
-                id="checkbox-1"/>
-            <div class="mdc-checkbox__background">
-                <svg class="mdc-checkbox__checkmark"
-                    viewBox="0 0 24 24">
-                    <path class="mdc-checkbox__checkmark-path"
-                        fill="none"
-                        d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
-                </svg>
-                <div class="mdc-checkbox__mixedmark"></div>
-            </div>
-            <div class="mdc-checkbox__ripple"></div>
-        </div>
-        <label for="checkbox-1">Musterset (mehrfach verwendbar)</label>
-    </div>
-    
-    <details>
-        <summary class="mdc-typography--headline6"><span id="exportset-length">0</span> Dokumente ausgewählt</summary>
-        <div class="export-sets">
-            <ul class="mdc-list mdc-list--two-line">
-            </ul>
-        </div>
-    </details>
-    <div class="button-wrapper">
-        <div class="mdc-form-field submit-button">
-            <button class="mdc-button mdc-button--raised save-button" onclick="dapi.closeResourceIfMainResource();">
-                <div class="mdc-button__ripple"></div>
-                <span class="mdc-button__label">
-                   Beenden
-                </span>
-            </button>
-        </div>
-        <div class="mdc-form-field submit-button button-right">
-            <button class="mdc-button mdc-button--raised save-button" onclick="sendExport()">
-                <div class="mdc-button__ripple"></div>
-                <span class="mdc-button__label">
-                    Exportieren
-                </span>
-            </button>
-        </div>
-    </div>
+        {{> checkbox title="Musterset (mehrfach verwendbar)"}}
 
-    <div class="mdc-snackbar">
-        <div class="mdc-snackbar__surface">
-            <div class="mdc-snackbar__label" role="status" aria-live="polite"></div>
-        </div>
-    </div>
-    <div class="mdc-dialog">
-        <div class="mdc-dialog__container">
-            <div class="mdc-dialog__surface"
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="my-dialog-title"
-            aria-describedby="my-dialog-content">
-            <div class="mdc-dialog__content" id="my-dialog-content">
-                Wollen Sie dieses Exportset wirklich exportieren?
+        <details>
+            <summary class="mdc-typography--headline6"><span id="exportset-length">0</span> Dokumente ausgewählt
+            </summary>
+            <div class="export-sets">
+                <ul class="mdc-list mdc-list--two-line">
+                </ul>
             </div>
-            <div class="mdc-dialog__actions">
-                <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="cancel">
-                <div class="mdc-button__ripple"></div>
-                <span class="mdc-button__label">Abbrechen</span>
-                </button>
-                <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="ok">
-                <div class="mdc-button__ripple"></div>
-                <span class="mdc-button__label">Bestätigen</span>
-                </button>
-            </div>
+        </details>
+
+        <div class="button-wrapper">
+            {{> button title="Beenden" onclick="dapi.closeResourceIfMainResource();"}}
+            {{> button title="Exportieren" onclick="sendExport()" additionalclass="button-right"}}
         </div>
-    </div>
-    <div id="metaData" data-meta="{{metaData}}"></div>
+
+        {{> snackbar }}
+        {{> dialog question="Wollen Sie dieses Exportset wirklich exportieren?"}}
+
+        <div id="metaData" data-meta="{{metaData}}"></div>
 
     {{else}}
-    <header>
-        <h1 class="mdc-typography--headline6 header-config">Sie sind nicht berechtigt Änderungen vorzunehmen.</h1>
-    </header>
+        <header>
+            <h1 class="mdc-typography--headline6 header-config">Sie sind nicht berechtigt Änderungen vorzunehmen.</h1>
+        </header>
     {{/if}}
 
 </div>

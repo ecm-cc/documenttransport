@@ -10,16 +10,20 @@ const s3 = new AWS.S3({
 class ImportSet extends Set {
     constructor(req) {
         super(req);
-        const postData = JSON.parse(req.body.set);
-        this.name = postData.name;
-        this.template = postData.template;
-        this.documents = postData.documents.id;
+        const postData = req.body;
+        const setPostData = JSON.parse(postData.set);
+        this.name = setPostData.name;
+        this.template = setPostData.template;
+        this.documents = setPostData.documents.id;
+        this.parentsForCategory = JSON.parse(postData.parentForCategory);
+        this.newAttributes = postData.newAttributes;
+        this.failedToUpload = [];
     }
 
     async init() {
         await this.getSourceMapping();
         await this.getMeta();
-        this.buildUploadObjects();
+        await this.buildUploadObjects();
     }
 
     async getSourceMapping() {
@@ -37,7 +41,8 @@ class ImportSet extends Set {
         this.meta = metaResponses.map((meta) => JSON.parse(meta.Body.toString('utf-8')));
     }
 
-    buildUploadObjects() {
+    async buildUploadObjects() {
+        const promises = [];
         this.uploadPayloads = [];
         this.meta.forEach((documentMeta, index) => {
             const uploadPayload = {};
@@ -50,21 +55,75 @@ class ImportSet extends Set {
             uploadPayload.sourceProperties = {
                 properties: this.mapProperties(index),
             };
-            // TODO: Muss nur für Personalakten (oder im zweiten Schritt Musterakten) gesetzt werden
-            uploadPayload.parentId = ''; // Test Francis Bendel: D100125209
             this.uploadPayloads.push(uploadPayload);
+            promises.push(this.setParentId(documentMeta, index));
         });
+        await Promise.all(promises);
     }
 
     mapProperties(index) {
         const properties = [];
+        const categoryConfig = this.config.categories.find((category) => category.categoryName === this.meta[index].category);
         this.meta[index].objectProperties.forEach((property) => {
-            properties.push({
-                key: this.sourceMapping.properties.find((sourceProperty) => sourceProperty.displayName === property.name).key,
-                values: [property.value],
-            });
+            if (property.value !== '' && categoryConfig.excludeFields && !categoryConfig.excludeFields.some((field) => field === property.name)) {
+                properties.push({
+                    key: this.sourceMapping.properties.find((sourceProperty) => sourceProperty.displayName === property.name).key,
+                    values: property.value === '' ? [] : [property.value],
+                });
+            }
         });
         return properties;
+    }
+
+    async setParentId(child, index) {
+        if (this.parentsForCategory.some((element) => element.category === child.category)) {
+            await this.setOverwrittenParent(child, index);
+        } else {
+            await this.setDefaultParent(child.id, index);
+        }
+    }
+
+    async setDefaultParent(childId, index) {
+        this.httpOptions.url = `${this.config.host}/dms/r/${this.config.repositoryId}/fo?parents_of=${childId}`;
+        const response = await axios(this.httpOptions);
+        try {
+            const parentItems = response.data.rootFolderPaths[0].items;
+            this.uploadPayloads[index].parentId = parentItems[parentItems.length - 1].id;
+        } catch (err) {
+            this.uploadPayloads[index].parentId = '';
+        }
+    }
+
+    async setOverwrittenParent(element, index) {
+        const parentForCategory = this.parentsForCategory.find((cat) => cat.category === element.category);
+
+        this.httpOptions.url = this.getSearchURL(element, parentForCategory);
+        const response = await axios(this.httpOptions);
+        this.uploadPayloads[index].parentId = response.data.items[0].id;
+
+        this.uploadPayloads[index].sourceProperties.properties.forEach((property) => {
+            if (property.key === parentForCategory.parentField) {
+                // eslint-disable-next-line no-param-reassign
+                property.values = [parentForCategory.parentValue];
+            }
+        });
+
+        return this.meta;
+    }
+
+    getSearchURL(element, parentForCategory) {
+        const categoryConfig = this.config.categories.find((category) => category.categoryName === parentForCategory.category);
+
+        const urlHost = `${this.config.host}/dms/r/${this.config.repositoryId}/sr/?objectdefinitionids=`;
+        const searchCategory = Array.isArray(categoryConfig.parent) ? categoryConfig.parent : `["${categoryConfig.parent}"]`;
+        const searchUniqueField = `"${categoryConfig.uniqueFieldId}":["${parentForCategory.parentValue}"]`;
+
+        const registerProp = element.objectProperties.find((prop) => prop.name === 'Register');
+        const searchRegister = registerProp.value !== '' && categoryConfig.registerId > 0 ? `,"${categoryConfig.registerId}":["${registerProp.value}"]` : '';
+
+        const searchQuery = `${searchCategory}&properties={${searchUniqueField}${searchRegister}}`;
+
+        return `${urlHost}${searchQuery}`;
     }
 
     async import() {
@@ -73,13 +132,14 @@ class ImportSet extends Set {
             promises.push(this.performImport(documentMeta, index));
         });
         await Promise.all(promises);
+        return this.failedToUpload;
     }
 
     async performImport(documentMeta, index) {
         const file = await this.getS3File(documentMeta, index);
         this.uploadPayloads[index].contentLocationUri = await this.uploadFile(file);
         await this.uploadProperties(index);
-        if (this.template !== true) {
+        if (this.template === '0') {
             await this.delete();
         }
     }
@@ -103,16 +163,32 @@ class ImportSet extends Set {
         this.httpOptions.headers['Content-Type'] = 'application/json';
         this.httpOptions.url = `${this.config.host}/dms/r/${this.config.repositoryId}/o2m`;
         this.httpOptions.data = this.uploadPayloads[index];
-        await axios(this.httpOptions);
+        try {
+            await axios(this.httpOptions);
+        } catch (err) {
+            this.failedToUpload.push(this.meta[index].id);
+            // TODO Push more than only id -> Same content as documentlist in meta.json
+        }
     }
 
     async delete() {
         const promises = [];
         const setElements = await s3.listObjectsV2({ Bucket: this.config.bucketName, Prefix: `${this.name}/` }).promise();
         setElements.Contents.forEach((setElement) => {
-            promises.push(s3.deleteObject({ Bucket: this.config.bucketName, Key: setElement.Key }).promise());
+            if (!this.failedToUpload.some((failedElement) => setElement.Key.includes(failedElement)) && setElement.Key !== `${this.name}/meta.json`) {
+                promises.push(s3.deleteObject({ Bucket: this.config.bucketName, Key: setElement.Key }).promise());
+            }
         });
         await Promise.all(promises);
+        await this.updateMeta();
+    }
+
+    async updateMeta() {
+        if (this.failedToUpload.length === 0) {
+            await s3.deleteObject({ Bucket: this.config.bucketName, Key: `${this.name}/meta.json` }).promise();
+        } else {
+            // Change meta.json, so all failed documents remain
+        }
     }
 }
 
