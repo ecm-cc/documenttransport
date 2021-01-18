@@ -59,9 +59,9 @@ function getCategoryTextFields() {
     const categories = removeDuplicateCategories();
     textFields.push('<span class="mdc-typography--body1">Bitte Werte für die Elemente angeben, die in eine andere Akte importiert werden sollen!</span><br/>');
     categories.forEach((category) => {
-        const configCategory = metaData.config.categories.find((c) => c.id === category.key);
-        const { uniqueFieldId } = configCategory;
-        const { uniqueFieldName } = configCategory;
+        const uniqueFields = metaData.config.uniqueFields[category.key];
+        const uniqueFieldId = uniqueFields[uniqueFields.length - 1];
+        const uniqueFieldName = metaData.uniqueFieldNames[uniqueFieldId];
         if (uniqueFieldId) {
             textFields.push(`<span class="mdc-typography--body1">${category.displayName}: </span>`);
             textFields.push(`<label class="mdc-text-field mdc-text-field--outlined">
@@ -106,11 +106,11 @@ function doImport() {
                 successSnackbar(`Das Set "${importSet.name}" wurde erfolgreich importiert.`);
             }).fail((err) => {
                 console.error(err);
-                if (err.statusCode === 409) {
-                    // failSnackbar(setFailedDocumentsText(err.response)); TODO - Show failed docs
-                    failSnackbar('Failed documents, Alex is working on this');
+                if (err.status === 409) {
+                    failSnackbar(setFailedDocumentsText(err.responseJSON));
+                } else {
+                    failSnackbar(`Der Import konnte aufgrund eines Fehlers nicht durchgeführt werden: ${err.responseText ? err.responseText : err}`);
                 }
-                failSnackbar(`Der Import konnte aufgrund eines Fehlers nicht durchgeführt werden: ${err.responseText ? err.responseText : err}`);
             }).always(() => {
                 hideOverlay();
             });
@@ -130,4 +130,13 @@ function getParentsForCategory() {
         }
     });
     return JSON.stringify(parentsForCategory);
+}
+
+function setFailedDocumentsText(response) {
+    const { failedDocuments } = response;
+    let snackBarMessage = 'Folgende Dokumente konnten nicht importiert werden:\n';
+    failedDocuments.forEach((doc) => {
+        snackBarMessage += `Dokument ${doc.name.caption} (ID: ${doc.id}) - ${doc.message.message}\n`;
+    });
+    return snackBarMessage;
 }

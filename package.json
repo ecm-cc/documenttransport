@@ -13,6 +13,7 @@
     "@ablegroup/checkgroup": "^1.0.5",
     "@ablegroup/httpoptions": "^1.0.1",
     "@ablegroup/idp": "^1.0.0",
+    "@ablegroup/propertymapping": "^1.0.3",
     "@ablegroup/remoteconfig": "^1.0.0",
     "@ablegroup/requestid": "^1.0.0",
     "@ablegroup/tenant": "^1.0.0",

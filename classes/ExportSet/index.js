@@ -85,9 +85,6 @@ class ExportSet extends Set {
         const fullCategories = [];
         const categoryNames = this.meta.map((metaElement) => metaElement.category);
         categoryNames.forEach((category) => {
-            console.log(categoryNames);
-            console.log(category);
-            console.log(this.categories);
             fullCategories.push(this.categories.find((c) => c.displayName === category));
         });
         return fullCategories;
