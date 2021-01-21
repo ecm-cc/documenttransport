@@ -61,7 +61,7 @@ function getCategoryTextFields() {
     categories.forEach((category) => {
         const uniqueFields = metaData.config.uniqueFields[category.key];
         const uniqueFieldId = uniqueFields[uniqueFields.length - 1];
-        const uniqueFieldName = metaData.uniqueFieldNames[uniqueFieldId];
+        const uniqueFieldName = metaData.uniqueFieldNames.find((name) => name[uniqueFieldId])[uniqueFieldId];
         if (uniqueFieldId) {
             textFields.push(`<span class="mdc-typography--body1">${category.displayName}: </span>`);
             textFields.push(`<label class="mdc-text-field mdc-text-field--outlined">

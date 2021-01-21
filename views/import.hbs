@@ -12,7 +12,7 @@
                             <span class="mdc-list-item__primary-text">
                                 {{this.name}} von {{this.stage}}, enthält {{this.count}} Dokumente
                                 {{#eq this.template "1"}}
-                                    (Musterakte, mehrfach verwendbar){{/eq}}
+                                    (Muster, mehrfach verwendbar){{/eq}}
                             </span>
                             <span class="mdc-list-item__secondary-text">
                                 Erstellt von {{this.creator}} am {{timeStampToDate this.created}}
@@ -33,8 +33,7 @@
             <ul class="mdc-list mdc-list--two-line" id="importset-details">
             </ul>
         </details>
-        <!-- Overwrite parent not included maybe later -->
-        <div style="display: none;">{{> checkbox title="In andere Akte importieren"}}</div>
+        <div >{{> checkbox title="In andere Akte importieren"}}</div>
         <div class="text-field-wrapper">
 
         </div>

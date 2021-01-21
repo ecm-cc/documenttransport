@@ -48,86 +48,45 @@ class ImportSet extends Set {
             uploadPayload.sourceCategory = documentMeta.systemProperties.find((property) => property.id === 'property_category').value;
             uploadPayload.sourceId = `/dms/r/${this.config.repositoryId}/source`;
             this.uploadPayloads.push(uploadPayload);
-            promises.push(this.mapProperties(index));
-            promises.push(this.setParentId(documentMeta, index));
+            promises.push(this.mapProperties(documentMeta, index));
         });
         await Promise.all(promises);
     }
 
-    async mapProperties(index) {
+    async mapProperties(documentMeta, index) {
         const stage = this.config.stage.toLowerCase();
         const propertiesOfCategory = await mapping.getPropertiesByCategory(stage, null, null, this.meta[index].category);
-        // TODO: Line below should be used via propertymapping & recognition parameter
         const excludeFields = this.config.excludeFields[this.meta[index].category];
         const properties = [];
 
         this.meta[index].objectProperties.forEach((property) => {
             if (property.value !== '' && (!excludeFields || !excludeFields.some((field) => field === property.name))) {
-                properties.push({
-                    key: propertiesOfCategory.find((prop) => prop.displayname === property.name).propertyKey,
-                    values: [property.value],
-                });
+                if (propertiesOfCategory.some((prop) => prop.displayname === property.name)) {
+                    properties.push({
+                        key: propertiesOfCategory.find((prop) => prop.displayname === property.name).propertyKey,
+                        values: [property.value],
+                    });
+                }
             }
         });
         this.uploadPayloads[index].sourceProperties = {
             properties,
         };
-    }
 
-    async setParentId(child, index) {
-        if (this.parentsForCategory.some((element) => element.category === child.category)) {
-            await this.setOverwrittenParent(child, index);
-        } else {
-            await this.setDefaultParent(child.id, index);
+        const overwriteElement = this.parentsForCategory.find((element) => element.category === documentMeta.category);
+
+        if (overwriteElement) {
+            console.log('Try to overwrite parent for ', index, this.uploadPayloads[index]);
+            this.uploadPayloads[index].sourceProperties.properties.forEach((property, i) => {
+                console.log('Checking', property.key, overwriteElement.parentField);
+                if (property.key.toString() === overwriteElement.parentField.toString()) {
+                    // Reason: We want to manipulate the document metadata to overwrite the parent element
+                    // eslint-disable-next-line no-param-reassign
+                    property.values = [overwriteElement.parentValue];
+                    this.uploadPayloads[index].sourceProperties.properties[i].values = [overwriteElement.parentValue];
+                }
+            });
         }
-    }
-
-    async setDefaultParent(childId, index) {
-        // TODO get parent via search ?
-        this.httpOptions.url = `${this.config.host}/dms/r/${this.config.repositoryId}/fo?parents_of=${childId}`;
-        const response = await axios(this.httpOptions);
-        try {
-            const parentItems = response.data.rootFolderPaths[0].items;
-            this.uploadPayloads[index].parentId = parentItems[parentItems.length - 1].id;
-        } catch (err) {
-            this.uploadPayloads[index].parentId = '';
-        }
-    }
-
-    async setOverwrittenParent(element, index) {
-        const parentForCategory = this.parentsForCategory.find((cat) => cat.category === element.category);
-
-        this.httpOptions.url = await this.getSearchURL(element, parentForCategory);
-        const response = await axios(this.httpOptions);
-        this.uploadPayloads[index].parentId = response.data.items[0].id;
-
-        this.uploadPayloads[index].sourceProperties.properties.forEach((property) => {
-            if (property.key === parentForCategory.parentField) {
-                // eslint-disable-next-line no-param-reassign
-                property.values = [parentForCategory.parentValue];
-            }
-        });
-
-        return this.meta;
-    }
-
-    async getSearchURL(element, parentForCategory) {
-        const stage = this.config.stage.toLowerCase();
-        const parentCategory = await mapping.getCategoryByChildren(stage, null, parentForCategory.category);
-        const uniqueFields = this.config.uniqueFields[element.category];
-
-        const urlHost = `${this.config.host}/dms/r/${this.config.repositoryId}/sr/?objectdefinitionids=`;
-        const searchCategory = `["${parentCategory.categoryKey}"]`;
-        // TODO: Line below should be used via propertymapping & recognition parameter
-        const searchUniqueField = `"${uniqueFields[0]}":["${parentForCategory.parentValue}"]`;
-
-        const registerProp = element.objectProperties.find((prop) => prop.name === 'Register');
-        // TODO: Line below should be used via propertymapping & recognition parameter
-        const searchRegister = registerProp.value !== '' && uniqueFields[1] ? `,"${uniqueFields[1]}":["${registerProp.value}"]` : '';
-
-        const searchQuery = `${searchCategory}&properties={${searchUniqueField}${searchRegister}}`;
-
-        return `${urlHost}${searchQuery}`;
     }
 
     async import() {
@@ -148,11 +107,16 @@ class ImportSet extends Set {
                 await this.delete(index);
             }
         } catch (err) {
+            let errMessage = err;
+            if (err.response && err.response.data && err.response.data.reason) {
+                errMessage = err.response.data.reason;
+            }
+            console.error(errMessage);
             this.failedToUpload.push({
                 id: this.meta[index].id,
                 name: this.meta[index],
                 category: this.meta[index].systemProperties.find((property) => property.id === 'property_filename').value,
-                message: err,
+                message: errMessage,
             });
         }
         await this.updateMeta();
@@ -181,16 +145,17 @@ class ImportSet extends Set {
     }
 
     async delete(index) {
-        const fileName = this.meta[index].systemProperties.find((property) => property.id === 'property_filename').value;
+        let fileName = this.meta[index].systemProperties.find((property) => property.id === 'property_filename').value;
+        const fileNameArray = fileName.split('.');
+        fileNameArray[fileNameArray.length - 1] = fileNameArray[fileNameArray.length - 1].toLowerCase();
+        fileName = fileNameArray.join('.');
         const documentID = this.meta[index].id;
-        console.log(`${this.name}/${documentID}/meta.json`);
-        console.log(`${this.name}/${documentID}/${fileName}`);
         await s3.deleteObject({ Bucket: this.config.bucketName, Key: `${this.name}/${documentID}/meta.json` }).promise();
         await s3.deleteObject({ Bucket: this.config.bucketName, Key: `${this.name}/${documentID}/${fileName}` }).promise();
     }
 
     async updateMeta() {
-        if (this.failedToUpload.length === 0) {
+        if (this.failedToUpload.length === 0 && this.template === '0') {
             await s3.deleteObject({ Bucket: this.config.bucketName, Key: `${this.name}/meta.json` }).promise();
         } else {
             const s3Response = await s3.getObject({ Bucket: this.config.bucketName, Key: `${this.name}/meta.json` }).promise();

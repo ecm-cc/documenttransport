@@ -32,6 +32,7 @@ class ExportSet extends Set {
 
     async setMeta() {
         const promises = [];
+        console.debug(this.meta.length); // TODO - What is happening here?
         this.meta.forEach((metaElement) => {
             this.httpOptions.url = `${this.config.host}/dms/r/${this.config.repositoryId}/o2/${metaElement.id}`;
             promises.push(axios(this.httpOptions));
