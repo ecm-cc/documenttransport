@@ -33,9 +33,8 @@
             <ul class="mdc-list mdc-list--two-line" id="importset-details">
             </ul>
         </details>
-        <div >{{> checkbox title="In andere Akte importieren"}}</div>
-        <div class="text-field-wrapper">
-
+        <div >{{> checkbox title="In andere Akte importieren" id="import-into-another" class="hide"}}</div>
+        <div class="text-field-wrapper hide">
         </div>
         <div class="button-wrapper">
             {{> button title="Beenden" onclick="dapi.closeResourceIfMainResource();"}}

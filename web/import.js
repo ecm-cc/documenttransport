@@ -56,30 +56,38 @@ function renderSelectedImportSet() {
 
 function getCategoryTextFields() {
     const textFields = [];
+    let hasValidCategories = false;
     const categories = removeDuplicateCategories();
     textFields.push('<span class="mdc-typography--body1">Bitte Werte für die Elemente angeben, die in eine andere Akte importiert werden sollen!</span><br/>');
     categories.forEach((category) => {
         const uniqueFields = metaData.config.uniqueFields[category.key];
-        const uniqueFieldId = uniqueFields[uniqueFields.length - 1];
-        const uniqueFieldName = metaData.uniqueFieldNames.find((name) => name[uniqueFieldId])[uniqueFieldId];
-        if (uniqueFieldId) {
-            textFields.push(`<span class="mdc-typography--body1">${category.displayName}: </span>`);
-            textFields.push(`<label class="mdc-text-field mdc-text-field--outlined">
-                                <input type="text" class="mdc-text-field__input" data-category="${category.displayName}" 
-                                    id="${uniqueFieldId}" aria-labelledby="${uniqueFieldId}">
-                                <span class="mdc-notched-outline">
-                                    <span class="mdc-notched-outline__leading"></span>
-                                    <span class="mdc-notched-outline__notch">
-                                        <span class="mdc-floating-label">${uniqueFieldName}</span>
+        if (uniqueFields) {
+            const uniqueFieldId = uniqueFields[uniqueFields.length - 1];
+            const uniqueFieldName = metaData.uniqueFieldNames.find((name) => name[uniqueFieldId])[uniqueFieldId];
+            if (uniqueFieldId) {
+                hasValidCategories = true;
+                textFields.push(`<span class="mdc-typography--body1">${category.displayName}: </span>`);
+                textFields.push(`<label class="mdc-text-field mdc-text-field--outlined">
+                                    <input type="text" class="mdc-text-field__input" data-category="${category.displayName}" 
+                                        id="${uniqueFieldId}" aria-labelledby="${uniqueFieldId}">
+                                    <span class="mdc-notched-outline">
+                                        <span class="mdc-notched-outline__leading"></span>
+                                        <span class="mdc-notched-outline__notch">
+                                            <span class="mdc-floating-label">${uniqueFieldName}</span>
+                                        </span>
+                                        <span class="mdc-notched-outline__trailing"></span>
                                     </span>
-                                    <span class="mdc-notched-outline__trailing"></span>
-                                </span>
-                            </label>
-                            <br/>`);
+                                </label>
+                                <br/>`);
+            }
+            $('.text-field-wrapper').html(textFields.join(''));
+            [].map.call(document.querySelectorAll('.mdc-text-field'), (el) => new mdc.textField.MDCTextField(el));
         }
     });
-    $('.text-field-wrapper').html(textFields.join(''));
-    [].map.call(document.querySelectorAll('.mdc-text-field'), (el) => new mdc.textField.MDCTextField(el));
+    if (hasValidCategories) {
+        $('.text-field-wrapper').show();
+        $('#import-into-another').show();
+    }
 }
 
 function removeDuplicateCategories() {

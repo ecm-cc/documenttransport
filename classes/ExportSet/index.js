@@ -2,7 +2,7 @@ const axios = require('axios');
 const AWS = require('aws-sdk');
 const stream = require('stream');
 const Set = require('../Set');
-const { ExportSetAlreadyExistingError } = require('../Errors');
+const { ExportSetAlreadyExistingError, DownloadNotAllowedError } = require('../Errors');
 
 const s3 = new AWS.S3({
     region: 'eu-central-1',
@@ -32,7 +32,6 @@ class ExportSet extends Set {
 
     async setMeta() {
         const promises = [];
-        console.debug(this.meta.length); // TODO - What is happening here?
         this.meta.forEach((metaElement) => {
             this.httpOptions.url = `${this.config.host}/dms/r/${this.config.repositoryId}/o2/${metaElement.id}`;
             promises.push(axios(this.httpOptions));
@@ -115,11 +114,17 @@ class ExportSet extends Set {
             }).promise();
             return pass;
         };
-
-        const response = await axios(this.httpOptions);
-        contentType = response.headers['content-type'];
-        response.data.pipe(uploadStream());
-        return promise;
+        try {
+            const response = await axios(this.httpOptions);
+            contentType = response.headers['content-type'];
+            response.data.pipe(uploadStream());
+            return promise;
+        } catch (err) {
+            const elementList = await s3.listObjectsV2({ Bucket: this.config.bucketName }).promise();
+            const elementListFiltered = elementList.Contents.filter((elem) => elem.Key.includes(`${this.name}/`)).map((elem) => ({ Key: elem.Key }));
+            await s3.deleteObjects({ Bucket: this.config.bucketName, Delete: { Objects: elementListFiltered } }).promise();
+            throw new DownloadNotAllowedError('Sie besitzen nicht die nötigen Berechtigungen, um diese Dokumentenkategorie zu exportieren.');
+        }
     }
 }
 
