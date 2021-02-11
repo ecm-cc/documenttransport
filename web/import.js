@@ -85,7 +85,6 @@ function getCategoryTextFields() {
         }
     });
     if (hasValidCategories) {
-        $('.text-field-wrapper').show();
         $('#import-into-another').show();
     }
 }
@@ -144,7 +143,7 @@ function setFailedDocumentsText(response) {
     const { failedDocuments } = response;
     let snackBarMessage = 'Folgende Dokumente konnten nicht importiert werden:\n';
     failedDocuments.forEach((doc) => {
-        snackBarMessage += `Dokument ${doc.name.caption} (ID: ${doc.id}) - ${doc.message.message}\n`;
+        snackBarMessage += `Dokument ${doc.name.caption} (ID: ${doc.id}) - ${doc.message}\n`;
     });
     return snackBarMessage;
 }

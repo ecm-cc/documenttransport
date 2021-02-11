@@ -74,6 +74,10 @@ function clearElements() {
 }
 
 function sendExport() {
+    if (exportSet.elements.length === 0) {
+        failSnackbar('Fügen Sie mindestens ein Dokument hinzu!');
+        return;
+    }
     dialog.open();
     dialog.listen('MDCDialog:closed', (reason) => {
         if (reason.detail.action === 'ok') {

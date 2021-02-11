@@ -18,6 +18,7 @@ module.exports = () => {
             await set.init();
             const importResult = await set.import();
             if (importResult.length > 0) {
+                console.error(importResult);
                 res.status(409).send({ failedDocuments: importResult });
             } else {
                 res.status(200).send('OK');
